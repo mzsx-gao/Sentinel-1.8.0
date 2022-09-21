@@ -37,11 +37,13 @@ public class FlowRuleEntity implements RuleEntity {
     private Integer grade;
     private Double count;
     /**
+     * 流控模式
      * 0为直接限流;1为关联限流;2为链路限流
      ***/
     private Integer strategy;
     private String refResource;
     /**
+     * 流控效果
      * 0. default, 1. warm up, 2. rate limiter
      */
     private Integer controlBehavior;

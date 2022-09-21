@@ -91,6 +91,7 @@ public class HttpEventTask implements Runnable {
             }
 
             // Validate the target command.
+            // 解析Sentinel Dashboard发送过来的指令，获取请求的指令
             String commandName = HttpCommandUtils.getTarget(request);
             if (StringUtil.isBlank(commandName)) {
                 writeResponse(printWriter, StatusCode.BAD_REQUEST, INVALID_COMMAND_MESSAGE);
@@ -98,6 +99,7 @@ public class HttpEventTask implements Runnable {
             }
 
             // Find the matching command handler.
+            // 根据命令找到对应的处理器
             CommandHandler<?> commandHandler = SimpleHttpCommandCenter.getHandler(commandName);
             if (commandHandler != null) {
                 CommandResponse<?> response = commandHandler.handle(request);

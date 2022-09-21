@@ -18,6 +18,7 @@ package com.alibaba.csp.sentinel.dashboard.rule;
 /**
  * @author Eric Zhao
  * @since 1.4.0
+ * 推送规则
  */
 public interface DynamicRulePublisher<T> {
 

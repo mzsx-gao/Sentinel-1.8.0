@@ -80,6 +80,7 @@ public class FileDataSourceDemo {
         String systemRulePath = URLDecoder.decode(classLoader.getResource("SystemRule.json").getFile(), "UTF-8");
 
         // Data source for FlowRule
+        // 流控规则读数据源
         FileRefreshableDataSource<List<FlowRule>> flowRuleDataSource = new FileRefreshableDataSource<>(
             flowRulePath, flowRuleListParser);
         FlowRuleManager.register2Property(flowRuleDataSource.getProperty());

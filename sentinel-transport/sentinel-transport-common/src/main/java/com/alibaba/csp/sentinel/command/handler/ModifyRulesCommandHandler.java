@@ -56,6 +56,7 @@ public class ModifyRulesCommandHandler implements CommandHandler<String> {
             return CommandResponse.ofFailure(new RuntimeException("The \"fastjson-" + JSON.VERSION
                     + "\" introduced in application is too old, you need fastjson-1.2.12 at least."));
         }
+        //获取规则类型和数据，类型用于判断规则类型，包括：流控、授权、降级、系统规则
         String type = request.getParam("type");
         // rule data in get parameter
         String data = request.getParam("data");
@@ -74,7 +75,9 @@ public class ModifyRulesCommandHandler implements CommandHandler<String> {
 
         if (FLOW_RULE_TYPE.equalsIgnoreCase(type)) {
             List<FlowRule> flowRules = JSONArray.parseArray(data, FlowRule.class);
+            //加载规则到内存中
             FlowRuleManager.loadRules(flowRules);
+            //获取写数据源，持久化(可以通过WritableDataSourceRegistry.registerFlowDataSource设置写数据源)
             if (!writeToDataSource(getFlowDataSource(), flowRules)) {
                 result = WRITE_DS_FAILURE_MSG;
             }

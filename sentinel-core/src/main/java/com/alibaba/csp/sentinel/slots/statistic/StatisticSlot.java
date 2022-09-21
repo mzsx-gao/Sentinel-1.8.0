@@ -51,16 +51,20 @@ import com.alibaba.csp.sentinel.slots.block.BlockException;
 @SpiOrder(-7000)
 public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
 
+    /**
+     * 用于存储资源的统计信息以及调用者信息，例如该资源的RT,QPS,thread count等等，这些信息将用作为多维度限流，
+     * 降级的依据（fireEntry用来触发下一个规则的调用）
+     */
     @Override
     public void entry(Context context, ResourceWrapper resourceWrapper, DefaultNode node, int count,
                       boolean prioritized, Object... args) throws Throwable {
         try {
-            // Do some checking.
+            // 触发后面的规则校验
             fireEntry(context, resourceWrapper, node, count, prioritized, args);
 
             // Request passed, add thread count and pass count.
-            node.increaseThreadNum();
-            node.addPassRequest(count);
+            node.increaseThreadNum();//增加当前调用线程数
+            node.addPassRequest(count);//增加规则校验通过调用数
 
             if (context.getCurEntry().getOriginNode() != null) {
                 // Add count for origin node.
@@ -97,7 +101,7 @@ public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
             // Blocked, set block exception to current entry.
             context.getCurEntry().setBlockError(e);
 
-            // Add block count.
+            // 增加被规则限流的调用数
             node.increaseBlockQps(count);
             if (context.getCurEntry().getOriginNode() != null) {
                 context.getCurEntry().getOriginNode().increaseBlockQps(count);
@@ -135,7 +139,7 @@ public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
             Throwable error = context.getCurEntry().getError();
 
             // Record response time and success count.
-            recordCompleteFor(node, count, rt, error);
+            recordCompleteFor(node, count, rt, error);//增加调用完成数和调用执行时间RT
             recordCompleteFor(context.getCurEntry().getOriginNode(), count, rt, error);
             if (resourceWrapper.getEntryType() == EntryType.IN) {
                 recordCompleteFor(Constants.ENTRY_NODE, count, rt, error);
@@ -155,7 +159,9 @@ public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
         if (node == null) {
             return;
         }
+        //增加调用完成数和调用执行时间RT
         node.addRtAndSuccess(rt, batchCount);
+        //减少当前调用线程数
         node.decreaseThreadNum();
 
         if (error != null && !(error instanceof BlockException)) {

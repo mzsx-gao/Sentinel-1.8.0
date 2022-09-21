@@ -35,6 +35,7 @@ import com.alibaba.fastjson.JSON;
 @CommandMapping(name = "jsonTree", desc = "get tree node VO start from root node")
 public class FetchJsonTreeCommandHandler implements CommandHandler<String> {
 
+    //簇点链路页面查询时会调到这里
     @Override
     public CommandResponse<String> handle(CommandRequest request) {
         List<NodeVo> results = new ArrayList<NodeVo>();

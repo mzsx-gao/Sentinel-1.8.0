@@ -36,8 +36,7 @@ public class CommandHandlerProvider implements Iterable<CommandHandler> {
 
     /**
      * Get all command handlers annotated with {@link CommandMapping} with command name.
-     *
-     * @return list of all named command handlers
+     * 通过spi机制获取到所有的CommandHandler实例，并保存到map中。通过@CommandMapping注解指定key名称，CommandHandler作为value
      */
     public Map<String, CommandHandler> namedHandlers() {
         Map<String, CommandHandler> map = new HashMap<String, CommandHandler>();

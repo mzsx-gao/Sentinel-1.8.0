@@ -60,6 +60,7 @@ public class ResponseTimeCircuitBreaker extends AbstractCircuitBreaker {
         slidingCounter.currentWindow().value().reset();
     }
 
+    //慢调用比例降级判断逻辑
     @Override
     public void onRequestComplete(Context context) {
         SlowRequestCounter counter = slidingCounter.currentWindow().value();
@@ -71,20 +72,27 @@ public class ResponseTimeCircuitBreaker extends AbstractCircuitBreaker {
         if (completeTime <= 0) {
             completeTime = TimeUtil.currentTimeMillis();
         }
+        //算出最大RT
         long rt = completeTime - entry.getCreateTimestamp();
         if (rt > maxAllowedRt) {
-            counter.slowCount.add(1);
+            counter.slowCount.add(1);//把慢调用次数加1
         }
-        counter.totalCount.add(1);
-
+        counter.totalCount.add(1);//总调用次数加1
+        //调用完处理断路器状态
         handleStateChangeWhenThresholdExceeded(rt);
     }
 
     private void handleStateChangeWhenThresholdExceeded(long rt) {
+        //如果断路器是打开状态，直接返回不做处理
         if (currentState.get() == State.OPEN) {
             return;
         }
-        
+
+        /**
+         * 如果断路器是半开状态：
+         * 断路器半开状态一般都是尝试着调用了一次请求，
+         * 如果这次调用响应时间依然超过最大rt阈值则将断路器打开，否则将断路器关闭
+         */
         if (currentState.get() == State.HALF_OPEN) {
             // In detecting request
             // TODO: improve logic for half-open recovery
@@ -96,17 +104,21 @@ public class ResponseTimeCircuitBreaker extends AbstractCircuitBreaker {
             return;
         }
 
+        //如果断路器是关闭状态：
         List<SlowRequestCounter> counters = slidingCounter.values();
         long slowCount = 0;
         long totalCount = 0;
         for (SlowRequestCounter counter : counters) {
+            //增加调用次数
             slowCount += counter.slowCount.sum();
             totalCount += counter.totalCount.sum();
         }
+        //总请求数小于配置的最小请求数，直接返回
         if (totalCount < minRequestAmount) {
             return;
         }
         double currentRatio = slowCount * 1.0d / totalCount;
+        //慢调用比例如果超过配置阈值则将断路器打开
         if (currentRatio > maxSlowRequestRatio) {
             transformToOpen(currentRatio);
         }

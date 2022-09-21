@@ -31,13 +31,13 @@ import com.alibaba.nacos.api.PropertyKeyConst;
  * Before you start, you need to start a Nacos server in local first, and then
  * use {@link NacosConfigSender} to publish initial rule configuration to Nacos.
  *
- * @author Eric Zhao
+ * sentinel用nacos作为数据源demo
  */
 public class NacosDataSourceDemo {
 
     private static final String KEY = "TestResource";
     // nacos server ip
-    private static final String remoteAddress = "localhost";
+    private static final String remoteAddress = "localhost:8848";
     // nacos group
     private static final String groupId = "Sentinel:Demo";
     // nacos dataId

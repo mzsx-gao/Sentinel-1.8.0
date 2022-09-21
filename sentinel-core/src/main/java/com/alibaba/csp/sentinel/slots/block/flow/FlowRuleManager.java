@@ -46,12 +46,12 @@ import com.alibaba.csp.sentinel.property.SentinelProperty;
  */
 public class FlowRuleManager {
 
+    //存储流控规则
     private static final Map<String, List<FlowRule>> flowRules = new ConcurrentHashMap<String, List<FlowRule>>();
 
     private static final FlowPropertyListener LISTENER = new FlowPropertyListener();
     private static SentinelProperty<List<FlowRule>> currentProperty = new DynamicSentinelProperty<List<FlowRule>>();
 
-    @SuppressWarnings("PMD.ThreadPoolCreationRule")
     private static final ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(1,
         new NamedThreadFactory("sentinel-metrics-record-task", true));
 
@@ -63,6 +63,7 @@ public class FlowRuleManager {
     /**
      * Listen to the {@link SentinelProperty} for {@link FlowRule}s. The property is the source of {@link FlowRule}s.
      * Flow rules can also be set by {@link #loadRules(List)} directly.
+     * 注册数据源，在添加监听器时会先调用一下监听器的configLoad方法把规则加载到内存（this.flowRules）中
      *
      * @param property the property to listen.
      */
@@ -91,7 +92,7 @@ public class FlowRuleManager {
 
     /**
      * Load {@link FlowRule}s, former rules will be replaced.
-     *
+     * 加载规则
      * @param rules new rules to load.
      */
     public static void loadRules(List<FlowRule> rules) {
@@ -124,18 +125,22 @@ public class FlowRuleManager {
         return true;
     }
 
+    //流控规则的属性监听器
     private static final class FlowPropertyListener implements PropertyListener<List<FlowRule>> {
 
+        //配置更新时会调用这个方法更新内存中的规则(this.flowRules)
         @Override
         public void configUpdate(List<FlowRule> value) {
             Map<String, List<FlowRule>> rules = FlowRuleUtil.buildFlowRuleMap(value);
             if (rules != null) {
+                // 清理掉内存中旧的流控规则，保存新的流控规则flowRules
                 flowRules.clear();
                 flowRules.putAll(rules);
             }
             RecordLog.info("[FlowRuleManager] Flow rules received: " + flowRules);
         }
 
+        //在DynamicSentinelProperty中添加监听器时会调用这个方法把DynamicSentinelProperty中的value值存储到this.flowRules中
         @Override
         public void configLoad(List<FlowRule> conf) {
             Map<String, List<FlowRule>> rules = FlowRuleUtil.buildFlowRuleMap(conf);

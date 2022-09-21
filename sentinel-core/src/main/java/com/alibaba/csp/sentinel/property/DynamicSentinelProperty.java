@@ -37,6 +37,7 @@ public class DynamicSentinelProperty<T> implements SentinelProperty<T> {
     @Override
     public void addListener(PropertyListener<T> listener) {
         listeners.add(listener);
+        //添加监听器时先调用一下监听器的configLoad方法初始化加载一次规则
         listener.configLoad(value);
     }
 
@@ -45,13 +46,14 @@ public class DynamicSentinelProperty<T> implements SentinelProperty<T> {
         listeners.remove(listener);
     }
 
+    //更新内存
     @Override
     public boolean updateValue(T newValue) {
         if (isEqual(value, newValue)) {
             return false;
         }
         RecordLog.info("[DynamicSentinelProperty] Config will be updated to: " + newValue);
-
+        // 用新规则替换旧规则，并通知所有属性监听器回调configUpdate方法
         value = newValue;
         for (PropertyListener<T> listener : listeners) {
             listener.configUpdate(newValue);

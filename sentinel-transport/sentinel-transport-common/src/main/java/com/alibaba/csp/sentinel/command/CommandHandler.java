@@ -17,8 +17,7 @@ package com.alibaba.csp.sentinel.command;
 
 /**
  * Represent a handler that handles a {@link CommandRequest}.
- *
- * @author Eric Zhao
+ * 用来和控制台交互的处理逻辑
  */
 public interface CommandHandler<R> {
 

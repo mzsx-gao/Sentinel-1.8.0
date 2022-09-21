@@ -39,6 +39,7 @@ public class MachineRegistryController {
     @Autowired
     private AppManagement appManagement;
 
+    //接收客户端发过来的心跳（机器信息）
     @ResponseBody
     @RequestMapping("/machine")
     public Result<?> receiveHeartBeat(String app, @RequestParam(value = "app_type", required = false, defaultValue = "0") Integer appType, Long version, String v, String hostname, String ip, Integer port) {

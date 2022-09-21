@@ -46,8 +46,10 @@ public class FlowRuleChecker {
         if (ruleProvider == null || resource == null) {
             return;
         }
+        //获取资源相关的流控规则
         Collection<FlowRule> rules = ruleProvider.apply(resource.getName());
         if (rules != null) {
+            //对资源逐条校验每个规则
             for (FlowRule rule : rules) {
                 if (!canPassCheck(rule, context, node, count, prioritized)) {
                     throw new FlowException(rule.getLimitApp(), rule);
@@ -81,7 +83,8 @@ public class FlowRuleChecker {
         if (selectedNode == null) {
             return true;
         }
-
+        // 限流核心入口，这里区分三种情况：
+        // 快速失败-DefaultController、预热-WarmUpController、匀速等待-RateLimiterController
         return rule.getRater().canPass(selectedNode, acquireCount, prioritized);
     }
 

@@ -300,7 +300,7 @@ public class SentinelApiClient {
             }
             return executeCommand(new HttpGet(urlBuilder.toString()));
         } else {
-            // Using POST
+            // 向sentinel客户端发起post请求（http://172.19.6.10:8719/setRules）
             return executeCommand(
                     postRequest(urlBuilder.toString(), params, isSupportEnhancedContentType(app, ip, port)));
         }
@@ -547,7 +547,7 @@ public class SentinelApiClient {
     public boolean setFlowRuleOfMachine(String app, String ip, int port, List<FlowRuleEntity> rules) {
         return setRules(app, ip, port, FLOW_RULE_TYPE, rules);
     }
-
+    //异步设置流控规则，传输到客户端
     public CompletableFuture<Void> setFlowRuleOfMachineAsync(String app, String ip, int port, List<FlowRuleEntity> rules) {
         return setRulesAsync(app, ip, port, FLOW_RULE_TYPE, rules);
     }

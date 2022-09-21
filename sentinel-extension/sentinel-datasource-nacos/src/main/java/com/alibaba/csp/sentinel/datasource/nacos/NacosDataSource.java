@@ -91,14 +91,15 @@ public class NacosDataSource<T> extends AbstractDataSource<String, T> {
         this.groupId = groupId;
         this.dataId = dataId;
         this.properties = properties;
+        // 创建nacos配置监听器，当配置文件发生变更时会回调这个监听器的receiveConfigInfo方法
         this.configListener = new Listener() {
             @Override
             public Executor getExecutor() {
                 return pool;
             }
-
             @Override
             public void receiveConfigInfo(final String configInfo) {
+                System.out.println("nacos监听器监控到配置信息变化:"+configInfo);
                 RecordLog.info(String.format("[NacosDataSource] New property value received for (properties: %s) (dataId: %s, groupId: %s): %s",
                     properties, dataId, groupId, configInfo));
                 T newValue = NacosDataSource.this.parser.convert(configInfo);
@@ -106,7 +107,9 @@ public class NacosDataSource<T> extends AbstractDataSource<String, T> {
                 getProperty().updateValue(newValue);
             }
         };
+        // 添加nacos配置监听器
         initNacosListener();
+        // 加载配置
         loadInitialConfig();
     }
 
@@ -116,6 +119,7 @@ public class NacosDataSource<T> extends AbstractDataSource<String, T> {
             if (newValue == null) {
                 RecordLog.warn("[NacosDataSource] WARN: initial config is null, you may have to check your data source");
             }
+            //初始化内存中的规则，这里是更新DynamicSentinelProperty的value值
             getProperty().updateValue(newValue);
         } catch (Exception ex) {
             RecordLog.warn("[NacosDataSource] Error when loading initial config", ex);

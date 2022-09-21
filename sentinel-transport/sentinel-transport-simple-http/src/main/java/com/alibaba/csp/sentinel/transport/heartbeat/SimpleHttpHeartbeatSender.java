@@ -57,6 +57,7 @@ public class SimpleHttpHeartbeatSender implements HeartbeatSender {
         this.addressList = newAddrs;
     }
 
+    //向sentinel服务端发送心跳
     @Override
     public boolean sendHeartbeat() throws Exception {
         if (TransportConfig.getRuntimePort() <= 0) {
@@ -72,6 +73,7 @@ public class SimpleHttpHeartbeatSender implements HeartbeatSender {
         SimpleHttpRequest request = new SimpleHttpRequest(addr, TransportConfig.getHeartbeatApiPath());
         request.setParams(heartBeat.generateCurrentMessage());
         try {
+            //请求服务端地址http://127.0.0.1:8080/registry/machine
             SimpleHttpResponse response = httpClient.post(request);
             if (response.getStatusCode() == OK_STATUS) {
                 return true;

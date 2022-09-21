@@ -131,6 +131,9 @@ public class NodeSelectorSlot extends AbstractLinkedProcessorSlot<Object> {
      */
     private volatile Map<String, DefaultNode> map = new HashMap<String, DefaultNode>(10);
 
+    /**
+     * 主要负责收集资源的路径，并将这些资源的调用路径以树状结构存储起来，用于根据调用路径进行流量控制
+     */
     @Override
     public void entry(Context context, ResourceWrapper resourceWrapper, Object obj, int count, boolean prioritized, Object... args)
         throws Throwable {

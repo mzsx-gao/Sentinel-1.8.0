@@ -49,6 +49,7 @@ public class AppController {
         return Result.ofSuccess(appManagement.getAppNames());
     }
 
+    //查询客户端服务列表
     @GetMapping("/briefinfos.json")
     public Result<List<AppInfo>> queryAppInfos(HttpServletRequest request) {
         List<AppInfo> list = new ArrayList<>(appManagement.getBriefApps());

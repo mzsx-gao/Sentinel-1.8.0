@@ -67,11 +67,13 @@ public abstract class AbstractCircuitBreaker implements CircuitBreaker {
     @Override
     public boolean tryPass(Context context) {
         // Template implementation.
+        //熔断器关闭状态，请求直接放过
         if (currentState.get() == State.CLOSED) {
             return true;
         }
         if (currentState.get() == State.OPEN) {
             // For half-open state we allow a request for probing.
+            //当前熔断器状态是开着，如果超过熔断时间周期则将断路器改为半开状态，尝试着调用一次请求
             return retryTimeoutArrived() && fromOpenToHalfOpen(context);
         }
         return false;
@@ -131,6 +133,7 @@ public abstract class AbstractCircuitBreaker implements CircuitBreaker {
 
     protected boolean fromHalfOpenToOpen(double snapshotValue) {
         if (currentState.compareAndSet(State.HALF_OPEN, State.OPEN)) {
+            //只要断路器再次被打开，就会按配置的熔断时长更新断路器的熔断周期
             updateNextRetryTimestamp();
             notifyObservers(State.HALF_OPEN, State.OPEN, snapshotValue);
             return true;
@@ -140,6 +143,7 @@ public abstract class AbstractCircuitBreaker implements CircuitBreaker {
 
     protected boolean fromHalfOpenToClose() {
         if (currentState.compareAndSet(State.HALF_OPEN, State.CLOSED)) {
+            //充值慢调用和总调用统计次数为0
             resetStat();
             notifyObservers(State.HALF_OPEN, State.CLOSED, null);
             return true;

@@ -109,6 +109,7 @@ public abstract class AbstractSentinelInterceptor implements HandlerInterceptor 
             return true;
         } catch (BlockException e) {
             try {
+                //通用的BlockException处理逻辑
                 handleBlockException(request, response, e);
             } finally {
                 ContextUtil.exit();

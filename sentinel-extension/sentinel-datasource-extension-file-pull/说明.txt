@@ -1,0 +1,9 @@
+新加的模块，实现了将配置规则持久化到本地文件中
+使用方式:
+客户端只要引入包即可:
+<!-- sentinel规则pull模式依赖 改造拉模式实现-->
+<dependency>
+    <groupId>com.alibaba.csp</groupId>
+    <artifactId>sentinel-datasource-extension-file-pull</artifactId>
+    <version>1.8.0</version>
+</dependency>

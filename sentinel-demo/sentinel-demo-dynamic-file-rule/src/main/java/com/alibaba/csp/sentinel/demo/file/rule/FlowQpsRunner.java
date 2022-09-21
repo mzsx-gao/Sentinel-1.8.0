@@ -113,9 +113,9 @@ class FlowQpsRunner {
                 oldBlock = globalBlock;
 
                 System.out.println(seconds + " send qps is: " + oneSecondTotal);
-                System.out.println(TimeUtil.currentTimeMillis() + ", total:" + oneSecondTotal
-                    + ", pass:" + oneSecondPass
-                    + ", block:" + oneSecondBlock);
+                System.out.println(TimeUtil.currentTimeMillis() + ", 总数:" + oneSecondTotal
+                    + ", 通过:" + oneSecondPass
+                    + ", 失败:" + oneSecondBlock);
 
                 if (seconds-- <= 0) {
                     stop = true;
@@ -124,8 +124,8 @@ class FlowQpsRunner {
 
             long cost = System.currentTimeMillis() - start;
             System.out.println("time cost: " + cost + " ms");
-            System.out.println("total:" + total.get() + ", pass:" + pass.get()
-                + ", block:" + block.get());
+            System.out.println("总数:" + total.get() + ", 通过:" + pass.get()
+                + ", 失败:" + block.get());
             System.exit(0);
         }
     }

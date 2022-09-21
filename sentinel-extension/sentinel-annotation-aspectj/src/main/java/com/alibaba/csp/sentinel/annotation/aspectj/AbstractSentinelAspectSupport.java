@@ -31,6 +31,7 @@ import java.util.Arrays;
 
 /**
  * Some common functions for Sentinel annotation aspect.
+ * 各种异常处理
  *
  * @author Eric Zhao
  * @author zhaoyuguang

@@ -71,6 +71,7 @@ public class MetricBucket {
     }
 
     public MetricBucket add(MetricEvent event, long n) {
+        //时间窗口里的请求数据实际是放在一个counter数组里，不同的下标代表不同的数据统计指标
         counters[event.ordinal()].add(n);
         return this;
     }

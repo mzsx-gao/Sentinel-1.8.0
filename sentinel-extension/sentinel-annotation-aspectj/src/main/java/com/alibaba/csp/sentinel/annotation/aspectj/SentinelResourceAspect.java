@@ -54,15 +54,13 @@ public class SentinelResourceAspect extends AbstractSentinelAspectSupport {
         int resourceType = annotation.resourceType();
         Entry entry = null;
         try {
-            /**
-             * 限流功能：
-             * 申请一个entry,如果能够申请成功，则说明没有被限流，否则会抛出BlockException,标示被限流了
-             */
+            //限流功能：申请一个entry,如果能够申请成功，则说明没有被限流，否则会抛出BlockException,标示被限流了
             entry = SphU.entry(resourceName, resourceType, entryType, pjp.getArgs());
-
+            //调用业务方法
             Object result = pjp.proceed();
             return result;
         } catch (BlockException ex) {
+            //处理BlockException异常
             return handleBlockException(pjp, annotation, ex);
         } catch (Throwable ex) {
             Class<? extends Throwable>[] exceptionsToIgnore = annotation.exceptionsToIgnore();
@@ -71,6 +69,8 @@ public class SentinelResourceAspect extends AbstractSentinelAspectSupport {
                 throw ex;
             }
             if (exceptionBelongsTo(ex, annotation.exceptionsToTrace())) {
+                //这里会设置entry的error属性，如果配置了异常比例或者异常数的降级规则，则DegradeSlot#exit#ExceptionCircuitBreaker中
+                //会根据这个entry的error属性来判断请求是否异常，从而处理后面的降级逻辑
                 traceException(ex);
                 return handleFallback(pjp, annotation, ex);
             }
@@ -79,6 +79,7 @@ public class SentinelResourceAspect extends AbstractSentinelAspectSupport {
             throw ex;
         } finally {
             if (entry != null) {
+                //退出逻辑，依次调用所有slot的exit方法
                 entry.exit(1, pjp.getArgs());
             }
         }

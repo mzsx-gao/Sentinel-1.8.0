@@ -25,10 +25,7 @@ import com.alibaba.csp.sentinel.log.RecordLog;
 
 /**
  * A {@link WritableDataSource} based on file.
- *
- * @param <T> data type
- * @author Eric Zhao
- * @since 0.2.0
+ * 可写数据源
  */
 public class FileWritableDataSource<T> implements WritableDataSource<T> {
 
@@ -63,6 +60,7 @@ public class FileWritableDataSource<T> implements WritableDataSource<T> {
         this.charset = charset;
     }
 
+    //将规则写入文件
     @Override
     public void write(T value) throws Exception {
         lock.lock();

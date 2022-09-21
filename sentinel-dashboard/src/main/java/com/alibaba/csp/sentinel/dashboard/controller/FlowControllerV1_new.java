@@ -19,10 +19,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import com.alibaba.csp.sentinel.dashboard.auth.AuthAction;
 import com.alibaba.csp.sentinel.dashboard.auth.AuthService.PrivilegeType;
+import com.alibaba.csp.sentinel.dashboard.rule.DynamicRuleProvider;
+import com.alibaba.csp.sentinel.dashboard.rule.DynamicRulePublisher;
 import com.alibaba.csp.sentinel.util.StringUtil;
 
 import com.alibaba.csp.sentinel.dashboard.client.SentinelApiClient;
@@ -34,6 +35,7 @@ import com.alibaba.csp.sentinel.dashboard.repository.rule.InMemoryRuleRepository
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,25 +43,33 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Flow rule controller.
+ * 将发布规则和查询规则都修改成从配置中心拉取和发布，原始推送到客户端模式参考
+ * @see FlowControllerV1_origin
  *
  * @author leyou
  * @author Eric Zhao
  */
-@RestController
+//@RestController
 @RequestMapping(value = "/v1/flow")
-public class FlowControllerV1 {
+public class FlowControllerV1_new {
 
-    private final Logger logger = LoggerFactory.getLogger(FlowControllerV1.class);
+    private final Logger logger = LoggerFactory.getLogger(FlowControllerV1_new.class);
 
     @Autowired
     private InMemoryRuleRepositoryAdapter<FlowRuleEntity> repository;
 
     @Autowired
     private SentinelApiClient sentinelApiClient;
+
+    @Autowired
+    @Qualifier("flowRuleNacosProvider")
+    private DynamicRuleProvider<List<FlowRuleEntity>> ruleProvider;
+
+    @Autowired
+    @Qualifier("flowRuleNacosPublisher")
+    private DynamicRulePublisher<List<FlowRuleEntity>> rulePublisher;
 
     @GetMapping("/rules")
     @AuthAction(PrivilegeType.READ_RULE)
@@ -77,7 +87,9 @@ public class FlowControllerV1 {
             return Result.ofFail(-1, "port can't be null");
         }
         try {
-            List<FlowRuleEntity> rules = sentinelApiClient.fetchFlowRuleOfMachine(app, ip, port);
+//            List<FlowRuleEntity> rules = sentinelApiClient.fetchFlowRuleOfMachine(app, ip, port);
+            //从配置中心获取规则配置
+            List<FlowRuleEntity> rules = ruleProvider.getRules(app,ip,port);
             rules = repository.saveAll(rules);
             return Result.ofSuccess(rules);
         } catch (Throwable throwable) {
@@ -133,6 +145,11 @@ public class FlowControllerV1 {
         return null;
     }
 
+    /**
+     * 新增规则
+     * @param entity 控制台封装的规则实体类FlowRuleEntity
+     * @return
+     */
     @PostMapping("/rule")
     @AuthAction(PrivilegeType.WRITE_RULE)
     public Result<FlowRuleEntity> apiAddFlowRule(@RequestBody FlowRuleEntity entity) {
@@ -147,9 +164,12 @@ public class FlowControllerV1 {
         entity.setLimitApp(entity.getLimitApp().trim());
         entity.setResource(entity.getResource().trim());
         try {
+            //保存规则到内存里
             entity = repository.save(entity);
-
-            publishRules(entity.getApp(), entity.getIp(), entity.getPort()).get(5000, TimeUnit.MILLISECONDS);
+            //异步设置流控规则，传输到客户端
+//            publishRules(entity.getApp(), entity.getIp(), entity.getPort()).get(5000, TimeUnit.MILLISECONDS);
+            //发布规则到配置中心
+            publishRules(entity.getApp());
             return Result.ofSuccess(entity);
         } catch (Throwable t) {
             Throwable e = t instanceof ExecutionException ? t.getCause() : t;
@@ -228,7 +248,9 @@ public class FlowControllerV1 {
                 return Result.ofFail(-1, "save entity fail: null");
             }
 
-            publishRules(entity.getApp(), entity.getIp(), entity.getPort()).get(5000, TimeUnit.MILLISECONDS);
+//            publishRules(entity.getApp(), entity.getIp(), entity.getPort()).get(5000, TimeUnit.MILLISECONDS);
+            //发布规则到配置中心
+            publishRules(entity.getApp());
             return Result.ofSuccess(entity);
         } catch (Throwable t) {
             Throwable e = t instanceof ExecutionException ? t.getCause() : t;
@@ -256,7 +278,9 @@ public class FlowControllerV1 {
             return Result.ofFail(-1, e.getMessage());
         }
         try {
-            publishRules(oldEntity.getApp(), oldEntity.getIp(), oldEntity.getPort()).get(5000, TimeUnit.MILLISECONDS);
+//            publishRules(oldEntity.getApp(), oldEntity.getIp(), oldEntity.getPort()).get(5000, TimeUnit.MILLISECONDS);
+            //发布规则到配置中心
+            publishRules(oldEntity.getApp());
             return Result.ofSuccess(id);
         } catch (Throwable t) {
             Throwable e = t instanceof ExecutionException ? t.getCause() : t;
@@ -266,8 +290,19 @@ public class FlowControllerV1 {
         }
     }
 
+    //发布规则到sentinel客户端
     private CompletableFuture<Void> publishRules(String app, String ip, Integer port) {
         List<FlowRuleEntity> rules = repository.findAllByMachine(MachineInfo.of(app, ip, port));
         return sentinelApiClient.setFlowRuleOfMachineAsync(app, ip, port, rules);
+    }
+
+    /**
+     * 发布到配置中心
+     * @param app
+     * @throws Exception
+     */
+    private void publishRules(/*@NonNull*/ String app) throws Exception {
+        List<FlowRuleEntity> rules = repository.findAllByApp(app);
+        rulePublisher.publish(app, rules);
     }
 }

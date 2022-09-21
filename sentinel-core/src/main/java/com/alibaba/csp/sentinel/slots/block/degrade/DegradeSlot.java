@@ -45,10 +45,12 @@ public class DegradeSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
     }
 
     void performChecking(Context context, ResourceWrapper r) throws BlockException {
+        //获取资源相关的熔断降级规则
         List<CircuitBreaker> circuitBreakers = DegradeRuleManager.getCircuitBreakers(r.getName());
         if (circuitBreakers == null || circuitBreakers.isEmpty()) {
             return;
         }
+        //对资源逐条校验每条规则
         for (CircuitBreaker cb : circuitBreakers) {
             if (!cb.tryPass(context)) {
                 throw new DegradeException(cb.getRule().getLimitApp(), cb.getRule());
@@ -72,6 +74,7 @@ public class DegradeSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
         if (curEntry.getBlockError() == null) {
             // passed request
             for (CircuitBreaker circuitBreaker : circuitBreakers) {
+                //这里要区分 慢调用比例、调用异常数、异常比例 判断逻辑
                 circuitBreaker.onRequestComplete(context);
             }
         }

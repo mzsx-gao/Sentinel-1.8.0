@@ -62,6 +62,7 @@ public class ExceptionCircuitBreaker extends AbstractCircuitBreaker {
         stat.currentWindow().value().reset();
     }
 
+    //调用异常数及比例判断逻辑
     @Override
     public void onRequestComplete(Context context) {
         Entry entry = context.getCurEntry();
@@ -71,7 +72,7 @@ public class ExceptionCircuitBreaker extends AbstractCircuitBreaker {
         Throwable error = entry.getError();
         SimpleErrorCounter counter = stat.currentWindow().value();
         if (error != null) {
-            counter.getErrorCount().add(1);
+            counter.getErrorCount().add(1);//异常数+1
         }
         counter.getTotalCount().add(1);
 

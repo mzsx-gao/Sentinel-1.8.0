@@ -24,6 +24,8 @@ import com.alibaba.csp.sentinel.node.Node;
 
 /**
  * @author jialiang.linjl
+ * 流控效果-排队等待
+ * 内部就是用了漏桶算法
  */
 public class RateLimiterController implements TrafficShapingController {
 
@@ -56,9 +58,11 @@ public class RateLimiterController implements TrafficShapingController {
 
         long currentTime = TimeUtil.currentTimeMillis();
         // Calculate the interval between every two requests.
+        // 计算每两个请求之间的时间间隔，如果QPS阈值是10，则间隔就是100ms
         long costTime = Math.round(1.0 * (acquireCount) / count * 1000);
 
         // Expected pass time of this request.
+        // 期望本次请求的时间点
         long expectedTime = costTime + latestPassedTime.get();
 
         if (expectedTime <= currentTime) {
@@ -67,12 +71,15 @@ public class RateLimiterController implements TrafficShapingController {
             return true;
         } else {
             // Calculate the time to wait.
-            long waitTime = costTime + latestPassedTime.get() - TimeUtil.currentTimeMillis();
-            if (waitTime > maxQueueingTimeMs) {
+//            long waitTime = costTime + latestPassedTime.get() - TimeUtil.currentTimeMillis();
+            long waitTime = expectedTime - currentTime;//这里改了源码，源码是上面一行代码
+            if (waitTime > maxQueueingTimeMs) {//等待时间超过配置的超时时间，限流
                 return false;
             } else {
+                // 期望本次请求的时间点
                 long oldTime = latestPassedTime.addAndGet(costTime);
                 try {
+                    // 等待时间
                     waitTime = oldTime - TimeUtil.currentTimeMillis();
                     if (waitTime > maxQueueingTimeMs) {
                         latestPassedTime.addAndGet(-costTime);
@@ -80,7 +87,7 @@ public class RateLimiterController implements TrafficShapingController {
                     }
                     // in race condition waitTime may <= 0
                     if (waitTime > 0) {
-                        Thread.sleep(waitTime);
+                        Thread.sleep(waitTime);//排队等待
                     }
                     return true;
                 } catch (InterruptedException e) {

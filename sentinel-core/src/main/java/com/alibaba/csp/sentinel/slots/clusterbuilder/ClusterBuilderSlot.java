@@ -70,8 +70,13 @@ public class ClusterBuilderSlot extends AbstractLinkedProcessorSlot<DefaultNode>
 
     private static final Object lock = new Object();
 
+    //每个资源全局对应一个chain，也就是全局对应一个ClusterBuilderSlot,全局对应一个ClusterNode
     private volatile ClusterNode clusterNode = null;
 
+    /**
+     * 此插槽用于构建资源的 ClusterNode 以及调用来源节点。ClusterNode 保持某个资源运行统计信息（响应时间、QPS、block 数目、
+     * 线程数、异常数等）以及调用来源统计信息列表。调用来源的名称由 ContextUtil.enter(contextName，origin) 中的 origin 标记
+     */
     @Override
     public void entry(Context context, ResourceWrapper resourceWrapper, DefaultNode node, int count,
                       boolean prioritized, Object... args)
@@ -81,6 +86,7 @@ public class ClusterBuilderSlot extends AbstractLinkedProcessorSlot<DefaultNode>
                 if (clusterNode == null) {
                     // Create the cluster node.
                     clusterNode = new ClusterNode(resourceWrapper.getName(), resourceWrapper.getResourceType());
+                    // 将clusterNode保存到全局的map中去
                     HashMap<ResourceWrapper, ClusterNode> newMap = new HashMap<>(Math.max(clusterNodeMap.size(), 16));
                     newMap.putAll(clusterNodeMap);
                     newMap.put(node.getId(), clusterNode);
@@ -89,6 +95,7 @@ public class ClusterBuilderSlot extends AbstractLinkedProcessorSlot<DefaultNode>
                 }
             }
         }
+        //DefaultNode中持有ClusterNode的对象
         node.setClusterNode(clusterNode);
 
         /*

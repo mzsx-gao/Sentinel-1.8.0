@@ -47,7 +47,9 @@ public class DefaultController implements TrafficShapingController {
 
     @Override
     public boolean canPass(Node node, int acquireCount, boolean prioritized) {
+        //从当前时间窗格中取统计指标数据
         int curCount = avgUsedTokens(node);
+        //如果当前QPS大于count阈值返回false,校验不通过
         if (curCount + acquireCount > count) {
             if (prioritized && grade == RuleConstant.FLOW_GRADE_QPS) {
                 long currentTime;
@@ -68,6 +70,7 @@ public class DefaultController implements TrafficShapingController {
         return true;
     }
 
+    //取当前时间窗格中的线程数或者调用通过数
     private int avgUsedTokens(Node node) {
         if (node == null) {
             return DEFAULT_AVG_USED_TOKENS;

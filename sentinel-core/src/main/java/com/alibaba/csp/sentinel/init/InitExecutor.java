@@ -37,6 +37,7 @@ public final class InitExecutor {
      * will immediately be interrupted and the application will exit.
      *
      * The initialization will be executed only once.
+     * 通过SPI机制加载Sentinel相关依赖包下META-INFO/services/下的所有InitFunc实例类
      */
     public static void doInit() {
         if (!initialized.compareAndSet(false, true)) {
@@ -45,10 +46,12 @@ public final class InitExecutor {
         try {
             ServiceLoader<InitFunc> loader = ServiceLoaderUtil.getServiceLoader(InitFunc.class);
             List<OrderWrapper> initList = new ArrayList<OrderWrapper>();
+            //循环解析InitFunc实现类封装成OrderWrapper对象并排序
             for (InitFunc initFunc : loader) {
                 RecordLog.info("[InitExecutor] Found init func: " + initFunc.getClass().getCanonicalName());
                 insertSorted(initList, initFunc);
             }
+            //循环执行initList的init方法
             for (OrderWrapper w : initList) {
                 w.func.init();
                 RecordLog.info(String.format("[InitExecutor] Executing %s with order %d",

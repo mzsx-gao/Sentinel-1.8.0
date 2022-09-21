@@ -38,7 +38,7 @@ public abstract class InMemoryRuleRepositoryAdapter<T extends RuleEntity> implem
     private Map<String, Map<Long, T>> appRules = new ConcurrentHashMap<>(16);
 
     private static final int MAX_RULES_SIZE = 10000;
-
+    //保存流控规则
     @Override
     public T save(T entity) {
         if (entity.getId() == null) {

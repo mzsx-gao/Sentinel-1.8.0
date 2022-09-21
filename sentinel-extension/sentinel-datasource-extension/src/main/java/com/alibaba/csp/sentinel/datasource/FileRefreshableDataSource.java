@@ -32,9 +32,7 @@ import com.alibaba.csp.sentinel.log.RecordLog;
  * Limitations: Default read buffer size is 1 MB. If file size is greater than
  * buffer size, exceeding bytes will be ignored. Default charset is UTF-8.
  * </p>
- *
- * @author Carpenter Lee
- * @author Eric Zhao
+ * 该类会周期性的读取文件以获取规则，当文件有更新时会及时发现，并将规则更新到内存中。
  */
 public class FileRefreshableDataSource<T> extends AutoRefreshDataSource<String, T> {
 
@@ -91,12 +89,15 @@ public class FileRefreshableDataSource<T> extends AutoRefreshDataSource<String, 
         this.charset = charset;
         // If the file does not exist, the last modified will be 0.
         this.lastModified = file.lastModified();
+        // 加载规则文件到DynamicSentinelProperty的value属性中
         firstLoad();
     }
 
     private void firstLoad() {
         try {
             T newValue = loadConfig();
+            //第一次只会更新DynamicSentinelProperty的value，然后在往DynamicSentinelProperty中添加监听器时才会调用
+            //FlowPropertyListener的configLoad方法将规则存储在FlowRuleManager的flowRules中
             getProperty().updateValue(newValue);
         } catch (Throwable e) {
             RecordLog.info("loadConfig exception", e);
@@ -129,6 +130,7 @@ public class FileRefreshableDataSource<T> extends AutoRefreshDataSource<String, 
         }
     }
 
+    //监控文件是否修改
     @Override
     protected boolean isModified() {
         long curLastModified = file.lastModified();

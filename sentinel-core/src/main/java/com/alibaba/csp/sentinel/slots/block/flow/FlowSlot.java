@@ -157,6 +157,7 @@ public class FlowSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
         this.checker = checker;
     }
 
+    //校验流控规则
     @Override
     public void entry(Context context, ResourceWrapper resourceWrapper, DefaultNode node, int count,
                       boolean prioritized, Object... args) throws Throwable {

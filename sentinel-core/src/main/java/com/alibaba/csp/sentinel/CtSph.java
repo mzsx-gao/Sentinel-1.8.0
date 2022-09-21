@@ -132,7 +132,7 @@ public class CtSph implements Sph {
         if (!Constants.ON) {
             return new CtEntry(resourceWrapper, null, context);
         }
-        //责任链模式构建一个slot链
+        //责任链模式构建一个slot链,SPI加载sentinel-core包下META-INFO/services里对应文件里的类
         ProcessorSlot<Object> chain = lookProcessChain(resourceWrapper);
 
         /*
@@ -145,8 +145,10 @@ public class CtSph implements Sph {
 
         Entry e = new CtEntry(resourceWrapper, chain, context);
         try {
+            //逐个调用slot链条里的每一个校验规则里的entry逻辑
             chain.entry(context, resourceWrapper, null, count, prioritized, args);
         } catch (BlockException e1) {
+            //逐个调用slot校验链条里的每一个校验规则的退出逻辑
             e.exit(count, args);
             throw e1;
         } catch (Throwable e1) {

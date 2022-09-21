@@ -1,0 +1,2 @@
+这个package是新加的内容，使得sentinel控台发布规则可以直接发布到nacos
+需要在对应的controller中调用这个包下的ruleProvier与rulePublisher

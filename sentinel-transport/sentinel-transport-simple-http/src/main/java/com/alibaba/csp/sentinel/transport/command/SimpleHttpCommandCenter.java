@@ -65,8 +65,9 @@ public class SimpleHttpCommandCenter implements CommandCenter {
     @Override
     @SuppressWarnings("rawtypes")
     public void beforeStart() throws Exception {
-        // Register handlers
+        //通过spi机制获取到所有的CommandHandler实例，并保存到map中。通过@CommandMapping注解指定key名称，CommandHandler作为value
         Map<String, CommandHandler> handlers = CommandHandlerProvider.getInstance().namedHandlers();
+        //注册所有的CommandHandler到CommandCenter的handlerMap中
         registerCommands(handlers);
     }
 
@@ -86,7 +87,6 @@ public class SimpleHttpCommandCenter implements CommandCenter {
 
         Runnable serverInitTask = new Runnable() {
             int port;
-
             {
                 try {
                     port = Integer.parseInt(TransportConfig.getPort());
@@ -94,15 +94,16 @@ public class SimpleHttpCommandCenter implements CommandCenter {
                     port = DEFAULT_PORT;
                 }
             }
-
             @Override
             public void run() {
                 boolean success = false;
+                //创建ServerSocket并绑定端口(默认8719，如果被占用，则+1)
                 ServerSocket serverSocket = getServerSocketFromBasePort(port);
 
                 if (serverSocket != null) {
                     CommandCenterLog.info("[CommandCenter] Begin listening at port " + serverSocket.getLocalPort());
                     socketReference = serverSocket;
+                    //ServerThread主要是开启一个线程监听上面的端口，例如:监听来自sentinel控制台推送规则的请求
                     executor.submit(new ServerThread(serverSocket));
                     success = true;
                     port = serverSocket.getLocalPort();
@@ -182,11 +183,12 @@ public class SimpleHttpCommandCenter implements CommandCenter {
 
         @Override
         public void run() {
-            while (true) {
+            while (true) {//while死循环监听当前端口（默认8719）
                 Socket socket = null;
                 try {
                     socket = this.serverSocket.accept();
                     setSocketSoTimeout(socket);
+                    //socket事件执行线程
                     HttpEventTask eventTask = new HttpEventTask(socket);
                     bizExecutor.submit(eventTask);
                 } catch (Exception e) {

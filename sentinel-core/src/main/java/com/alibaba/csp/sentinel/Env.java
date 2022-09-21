@@ -31,8 +31,9 @@ public class Env {
 
     public static final Sph sph = new CtSph();
 
+    //第一次调用Env.sph.entryWithType方法，Env初始化阶段执行静态代码块
     static {
-        // If init fails, the process will exit.
+        //通过SPI机制加载Sentinel相关依赖包下META-INFO/services/下的所有InitFunc实例类,然后调用其init方法
         InitExecutor.doInit();
     }
 

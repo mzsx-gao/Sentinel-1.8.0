@@ -45,6 +45,7 @@ public abstract class AutoRefreshDataSource<S, T> extends AbstractDataSource<S, 
             throw new IllegalArgumentException("recommendRefreshMs must > 0, but " + recommendRefreshMs + " get");
         }
         this.recommendRefreshMs = recommendRefreshMs;
+        //周期性的读取文件以获取规则，当文件有更新时会及时发现，并将规则更新到内存中
         startTimerService();
     }
 
@@ -52,6 +53,7 @@ public abstract class AutoRefreshDataSource<S, T> extends AbstractDataSource<S, 
     private void startTimerService() {
         service = Executors.newScheduledThreadPool(1,
             new NamedThreadFactory("sentinel-datasource-auto-refresh-task", true));
+        // 每隔3秒钟拉取一次文件，更新内存中的规则
         service.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
